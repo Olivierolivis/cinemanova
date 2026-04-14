@@ -9,7 +9,7 @@ function MovieCard({ movie }) {
 
   return (
     <div className="group relative min-w-0">
-      <div className="relative aspect-[2/3] overflow-hidden rounded-2xl border border-white/10 bg-gray-900 shadow-lg transition duration-300 group-hover:-translate-y-2 group-hover:shadow-glow">
+      <div className="relative aspect-[2/3] overflow-hidden rounded-2xl border border-emerald-100 bg-white shadow-lg transition duration-300 group-hover:-translate-y-2 group-hover:shadow-glow dark:border-white/10 dark:bg-gray-900">
         <img
           src={getImageUrl(movie.poster_path)}
           alt={movie.title}
@@ -60,10 +60,10 @@ function MovieCard({ movie }) {
       </div>
 
       <div className="mt-3 px-1">
-        <h3 className="line-clamp-1 text-sm font-semibold text-white">
+        <h3 className="line-clamp-1 text-sm font-semibold text-slate-900 dark:text-white">
           {movie.title}
         </h3>
-        <p className="mt-1 text-xs text-gray-400">
+        <p className="mt-1 text-xs text-slate-500 dark:text-gray-400">
           {movie.release_date?.slice(0, 4) || "Coming soon"}
         </p>
       </div>

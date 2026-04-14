@@ -24,6 +24,7 @@ export function ThemeProvider({ children }) {
   useEffect(() => {
     const root = document.documentElement;
     root.classList.toggle("dark", theme === "dark");
+    root.style.colorScheme = theme;
     localStorage.setItem("cinemanova-theme", theme);
   }, [theme]);
 

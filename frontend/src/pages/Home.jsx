@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import GenreBrowser from "../components/GenreBrowser";
+import GenreMovieGrid from "../components/GenreMovieGrid";
 import MovieCard from "../components/MovieCard";
 import Hero from "../components/Hero";
 import LoadingSkeleton from "../components/LoadingSkeleton";
@@ -20,8 +21,6 @@ const sectionConfig = {
   topRated: movieApi.getTopRated,
 };
 
-const GENRES_PER_PAGE = 8;
-
 function Home() {
   const [sections, setSections] = useState({
     trending: createSectionState(),
@@ -32,7 +31,6 @@ function Home() {
   const [error, setError] = useState("");
   const [genres, setGenres] = useState([]);
   const [genreQuery, setGenreQuery] = useState("");
-  const [genrePage, setGenrePage] = useState(1);
   const [selectedGenre, setSelectedGenre] = useState(null);
   const [genreSection, setGenreSection] = useState(createSectionState());
   const { favorites } = useFavorites();
@@ -105,46 +103,25 @@ function Home() {
     loadMovies();
   }, []);
 
-  useEffect(() => {
-    setGenrePage(1);
-  }, [genreQuery]);
-
-  useEffect(() => {
-    setGenrePage((currentPage) => Math.min(currentPage, totalGenrePages));
-  }, [totalGenrePages]);
-
-  const loadGenreMovies = async (genre, page = 1, append = false) => {
+  const loadGenreMovies = async (genre, page = 1) => {
     if (!genre?.id) {
       return;
     }
 
-    if (append) {
-      setGenreSection((current) => ({
-        ...current,
-        isLoadingMore: true,
-      }));
-    } else {
-      setGenreSection(createSectionState());
-    }
+    setGenreSection((current) => ({
+      ...current,
+      isLoadingMore: true,
+      ...(page === 1 ? createSectionState() : {}),
+    }));
 
     try {
       const data = await movieApi.getMoviesByGenre(genre.id, page);
 
-      setGenreSection((current) => {
-        const mergedMovies = append
-          ? [...current.movies, ...(data.results || [])]
-          : data.results || [];
-        const uniqueMovies = mergedMovies.filter(
-          (movie, index, allMovies) =>
-            index === allMovies.findIndex((item) => item.id === movie.id),
-        );
-
-        return {
-          movies: uniqueMovies,
-          page: data.page || 1,
-          totalPages: data.total_pages || 1,
-          isLoadingMore: false,
-        };
+      setGenreSection({
+        movies: data.results || [],
+        page: data.page || 1,
+        totalPages: data.total_pages || 1,
+        isLoadingMore: false,
       });
     } catch (_error) {
       setGenreSection((current) => ({
@@ -184,18 +161,6 @@ function Home() {
   };
 
   const heroMovie = sections.trending.movies[0] || sections.popular.movies[0];
-  const normalizedGenreQuery = genreQuery.trim().toLowerCase();
-  const filteredGenres = genres.filter((genre) =>
-    genre.name.toLowerCase().includes(normalizedGenreQuery),
-  );
-  const totalGenrePages = Math.max(
-    1,
-    Math.ceil(filteredGenres.length / GENRES_PER_PAGE),
-  );
-  const visibleGenres = filteredGenres.slice(
-    (genrePage - 1) * GENRES_PER_PAGE,
-    genrePage * GENRES_PER_PAGE,
-  );
 
   return (
     <main className="pb-16">
@@ -209,43 +174,43 @@ function Home() {
       ) : (
         <div className="mt-10 space-y-10">
           <GenreBrowser
-            genres={visibleGenres}
+            genres={genres}
             selectedGenreId={selectedGenre?.id || null}
             genreQuery={genreQuery}
-            currentPage={genrePage}
-            totalPages={totalGenrePages}
             onGenreQueryChange={setGenreQuery}
             onSelectGenre={(genre) => {
               setSelectedGenre(genre);
-              loadGenreMovies(genre, 1, false);
+              loadGenreMovies(genre, 1);
             }}
             onClearGenre={() => {
               setSelectedGenre(null);
               setGenreSection(createSectionState());
               setGenreQuery("");
-              setGenrePage(1);
             }}
-            onPreviousPage={() =>
-              setGenrePage((currentPage) => Math.max(1, currentPage - 1))
-            }
-            onNextPage={() =>
-              setGenrePage((currentPage) =>
-                Math.min(totalGenrePages, currentPage + 1),
-              )
-            }
           />
 
           {selectedGenre ? (
             <div id="genres">
-              <MovieRow
+              <GenreMovieGrid
                 title={`${selectedGenre.name} Picks`}
                 movies={genreSection.movies}
-                isLoading={genreSection.page === 0 && genreSection.movies.length === 0}
+                isLoading={
+                  genreSection.isLoadingMore ||
+                  (genreSection.page === 0 && genreSection.movies.length === 0)
+                }
                 page={genreSection.page}
                 totalPages={genreSection.totalPages}
-                isLoadingMore={genreSection.isLoadingMore}
-                onLoadMore={() =>
-                  loadGenreMovies(selectedGenre, genreSection.page + 1, true)
+                onPreviousPage={() =>
+                  loadGenreMovies(
+                    selectedGenre,
+                    Math.max(1, genreSection.page - 1),
+                  )
+                }
+                onNextPage={() =>
+                  loadGenreMovies(
+                    selectedGenre,
+                    Math.min(genreSection.totalPages, genreSection.page + 1),
+                  )
                 }
               />
             </div>
@@ -254,8 +219,8 @@ function Home() {
           {favorites.length > 0 && (
             <section className="space-y-4">
               <div className="px-6 md:px-12">
-                <h2 className="text-2xl font-bold text-white">Your Favorites</h2>
-                <p className="text-sm text-emerald-200/70">
+                <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Your Favorites</h2>
+                <p className="text-sm text-emerald-700/80 dark:text-emerald-200/70">
                   Quick access to the movies you saved locally.
                 </p>
               </div>
