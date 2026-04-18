@@ -54,7 +54,7 @@ Use these backend environment variables:
 PORT=5000
 TMDB_API_KEY=your_tmdb_api_key_here
 TMDB_BASE_URL=https://api.themoviedb.org/3
-CLIENT_URL=https://your-netlify-site.netlify.app
+CLIENT_URL=http://localhost:5173,https://your-netlify-site.netlify.app
 ```
 
 After deploy, copy your backend URL, for example:
